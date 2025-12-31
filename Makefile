@@ -18,5 +18,5 @@ clean:
 
 docker-build:
 	docker build -t cups-web:local -f Dockerfile .
-	docker build -t cups:local -f docker/Dockerfile .
+	docker build -t cups:local -f cups/Dockerfile cups
 
