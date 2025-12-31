@@ -1,0 +1,56 @@
+name: Build and Push Docker images
+
+on:
+  push:
+    branches: [ master ]
+    tags:      # push on tags as well
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and push images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push hanxi/cups (multi-arch)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./cups
+          file: ./cups/Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: |
+            hanxi/cups:latest
+            hanxi/cups:${{ github.sha }}
+
+      - name: Build and push hanxi/cups-web (multi-arch)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: |
+            hanxi/cups-web:latest
+            hanxi/cups-web:${{ github.sha }}
+
+      - name: Output pushed image refs
+        run: |
+          echo "Pushed hanxi/cups:latest and hanxi/cups:${GITHUB_SHA}"
+          echo "Pushed hanxi/cups-web:latest and hanxi/cups-web:${GITHUB_SHA}"
