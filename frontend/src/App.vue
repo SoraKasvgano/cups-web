@@ -1,8 +1,16 @@
 <template>
-  <div class="flex items-center">
-    <h1>CUPS 打印</h1>
-    <button v-if="view === 'PrintView'" class="btn btn-sm btn-outline ml-4" @click="logout">登出</button>
-    <component :is="view" @login-success="onLogin" @logout="onLogout" />
+  <div class="grid grid-rows-[auto_1fr] min-h-screen w-full bg-base-200">
+    <div class="navbar bg-base-100 shadow z-10 px-4 w-full">
+      <div class="flex-1">
+        <h1 class="text-xl font-bold text-base-content">CUPS 打印</h1>
+      </div>
+      <div class="flex-none">
+        <button v-if="view === 'PrintView'" class="btn btn-sm btn-outline" @click="logout">登出</button>
+      </div>
+    </div>
+    <div class="overflow-auto relative">
+      <component :is="view" @login-success="onLogin" @logout="onLogout" />
+    </div>
   </div>
 </template>
 
