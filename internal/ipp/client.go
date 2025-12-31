@@ -128,7 +128,7 @@ func ListPrinters(host string) ([]Printer, error) {
         name := string(m[1])
         display := string(m[2])
         // build ipp URI
-        uri := fmt.Sprintf("ipp://%s/printers/%s", hostOnly, name)
+        uri := fmt.Sprintf("http://%s/printers/%s", hostOnly, name)
         printers = append(printers, Printer{Name: display, URI: uri})
     }
 
