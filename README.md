@@ -17,3 +17,5 @@ SESSION_HASH_KEY 和 SESSION_BLOCK_KEY 可以用下面的命令生成
 ```
 openssl rand -base64 32 | tr -d '\n'
 ```
+
+**注意：** 要启用 Office 文档（docx/xlsx/ppt 等）到 PDF 的转换，服务器需要安装 LibreOffice（建议使用 libreoffice-headless）。如果通过 Docker 部署，请在镜像中安装 LibreOffice 或提供单独的转换容器。

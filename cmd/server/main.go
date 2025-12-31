@@ -56,6 +56,7 @@ func main() {
         json.NewEncoder(w).Encode(printers)
     }).Methods("GET")
     protected.HandleFunc("/print", printHandler).Methods("POST")
+    protected.HandleFunc("/convert", convertHandler).Methods("POST")
 
     // Static files (embedded) - register after API routes so /api/* is matched first
     serverFS := server.NewEmbeddedServer(frontend.FS)

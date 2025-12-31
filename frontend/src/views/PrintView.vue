@@ -22,7 +22,7 @@
 
             <div class="space-x-2">
               <button class="btn btn-primary" :disabled="!canPrint || converting" @click="uploadAndPrint">Print</button>
-              <button class="btn" :disabled="!selectedFile || converting" @click="convertToPdf">Convert</button>
+              <button class="btn" :disabled="!canConvert" @click="convertToPdf">Convert</button>
               <a v-if="previewUrl" :href="previewUrl" :download="downloadName" class="btn btn-ghost">Download Preview</a>
             </div>
 
@@ -79,6 +79,10 @@ export default {
   computed: {
     canPrint() {
       return !!this.printer && (!!this.pdfBlob || !!this.selectedFile)
+    },
+    canConvert() {
+      // disable convert when no file, while converting, or if file is already PDF
+      return !!this.selectedFile && !this.converting && this.selectedFile.type !== 'application/pdf'
     }
   },
   async mounted() {
@@ -101,6 +105,23 @@ export default {
       const m = document.cookie.match('(^|;)\\s*csrf_token\\s*=\\s*([^;]+)')
       return m ? m.pop() : ''
     },
+    clearPreview() {
+      // revoke any existing object URL and reset preview-related state
+      if (this.previewUrl) {
+        try {
+          URL.revokeObjectURL(this.previewUrl)
+        } catch (e) {
+          // ignore
+        }
+      }
+      this.previewUrl = ''
+      this.previewType = ''
+      this.textPreview = ''
+      this.pdfBlob = null
+      this.converted = false
+      this.selectedFile = null
+      this.downloadName = ''
+    },
     onFileChange(e) {
       const f = e.target.files[0]
       this.clearPreview()
@@ -116,6 +137,12 @@ export default {
       } else if (f.type.startsWith('image/')) {
         this.previewUrl = URL.createObjectURL(f)
         this.previewType = 'image'
+        this.pdfBlob = null
+        this.converted = false
+      } else if (this.isOfficeFile(f)) {
+        // Office files: preview not available in-browser; show a notice
+        this.previewType = 'text'
+        this.textPreview = 'Office document (preview unavailable). Click Convert to convert to PDF.'
         this.pdfBlob = null
         this.converted = false
       } else if (f.type.startsWith('text/') || /\.(txt|md|html)$/i.test(f.name)) {
@@ -147,7 +174,11 @@ export default {
       try {
         const f = this.selectedFile
         let blob = null
-        if (f.type.startsWith('image/')) {
+
+        // Office file types will be converted on the server
+        if (this.isOfficeFile(f)) {
+          blob = await this.convertOfficeToPdf(f)
+        } else if (f.type.startsWith('image/')) {
           blob = await this.imageFileToPdfBlob(f)
         } else if (f.type.startsWith('text/') || /\.(txt|md|html)$/i.test(f.name)) {
           const text = await f.text()
@@ -161,6 +192,7 @@ export default {
             throw new Error('Unsupported file type for conversion')
           }
         }
+
         this.pdfBlob = blob
         this.previewUrl = URL.createObjectURL(blob)
         this.previewType = 'pdf'
@@ -170,6 +202,41 @@ export default {
         this.msg = 'Conversion failed: ' + e.message
       } finally {
         this.converting = false
+      }
+    },
+    isOfficeFile(f) {
+      return /\.(docx?|pptx?|xlsx?)$/i.test(f.name) || [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ].includes(f.type)
+    },
+    async convertOfficeToPdf(file) {
+      const fd = new FormData()
+      fd.append('file', file, file.name)
+      try {
+        const resp = await fetch('/api/convert', {
+          method: 'POST',
+          body: fd,
+          credentials: 'include',
+          headers: { 'X-CSRF-Token': this.getCSRF() }
+        })
+        if (!resp.ok) {
+          const t = await resp.text()
+          throw new Error('server conversion failed: ' + t)
+        }
+        const blob = await resp.blob()
+        if (blob.type !== 'application/pdf') {
+          // sometimes servers may not set mime; still accept
+          // but warn in msg
+          this.msg = 'Converted file received (mime: ' + blob.type + ')'
+        }
+        return blob
+      } catch (e) {
+        throw e
       }
     },
     imageFileToPdfBlob(file) {
