@@ -1,4 +1,4 @@
-FROM oven/bun:latest AS web-build
+FROM oven/bun AS web-build
 WORKDIR /src/web
 COPY web/package*.json ./
 RUN bun install
