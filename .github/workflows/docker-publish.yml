@@ -33,7 +33,7 @@ jobs:
         with:
           context: ./cups
           file: ./cups/Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             hanxi/cups:latest
@@ -44,7 +44,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             hanxi/cups-web:latest

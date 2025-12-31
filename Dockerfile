@@ -14,7 +14,7 @@ RUN go env -w GOPROXY=https://proxy.golang.org
 RUN go mod download
 COPY . .
 # Copy built web assets into expected location for go:embed
-COPY --from=web-build /src/web/dist ./frontend/dist
+COPY --from=web-build /src/frontend/dist ./frontend/dist
 
 # Build the Go binary (frontend must be built before this step in CI/local)
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /out/cups-web ./cmd/server
