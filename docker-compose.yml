@@ -9,7 +9,7 @@ services:
     devices:
       - /dev/bus/usb:/dev/bus/usb
     volumes:
-      - ./etc:/etc/cups
+      - ./.etc:/etc/cups
     restart: unless-stopped
 
   web:

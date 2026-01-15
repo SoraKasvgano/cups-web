@@ -5,7 +5,7 @@ RUN bun install
 COPY frontend ./
 RUN bun run build
 
-FROM golang:1.20 AS builder
+FROM golang:1.24 AS builder
 WORKDIR /src
 
 # copy go modules and source
